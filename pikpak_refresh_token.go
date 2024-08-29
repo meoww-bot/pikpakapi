@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 )
 
@@ -39,10 +38,9 @@ func (p *PikPak) RefreshToken() error {
 		}
 		return fmt.Errorf("refresh token error message: %d", gjson.GetBytes(bs, "error").Int())
 	}
-	// logrus.Debug("refresh: ", string(bs))
 	p.JwtToken = gjson.GetBytes(bs, "access_token").String()
 	p.refreshToken = gjson.GetBytes(bs, "refresh_token").String()
 	p.RefreshSecond = gjson.GetBytes(bs, "expires_in").Int()
-	logrus.Debugf("RefreshToken access_token: %s refresh_token: %s\n", p.JwtToken, p.refreshToken)
+	logger.Debug("RefreshToken", "access_token", p.JwtToken, "refresh_token", p.refreshToken)
 	return nil
 }

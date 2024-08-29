@@ -8,7 +8,6 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/sirupsen/logrus"
 )
 
 const package_name = `com.pikcloud.pikpak`
@@ -25,7 +24,7 @@ var md5Arr []md5Obj
 func init() {
 	err := jsoniter.Unmarshal([]byte(md5_obj), &md5Arr)
 	if err != nil {
-		logrus.Warn(err)
+		panic(fmt.Sprintf("Unmarshal md5_obj error: %v", err))
 	}
 }
 
@@ -45,7 +44,6 @@ func (p *PikPak) AuthCaptchaToken(action string) error {
 			str = fmt.Sprintf("%x", md5.Sum([]byte(str+salt)))
 		}
 	}
-	// logrus.Debug("captcha_sign: ", "1."+str)
 	m["meta"] = map[string]string{
 		"captcha_sign":   "1." + str,
 		"user_id":        p.Sub,

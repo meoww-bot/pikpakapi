@@ -6,23 +6,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
-	"os"
 
 	jsoniter "github.com/json-iterator/go"
 )
-
-func init() {
-	debug := os.Getenv("PIKPAKAPI_DEBUG")
-	if debug == "true" || debug == "1" {
-		opts := slog.HandlerOptions{
-			AddSource: true,
-			Level:     slog.LevelDebug,
-		}
-		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &opts)))
-	}
-}
 
 const userAgent = `ANDROID-com.pikcloud.pikpak/1.21.0`
 const clientID = `YNxT9w7GMdWvEOKa`
@@ -97,7 +84,7 @@ func (p *PikPak) Login() error {
 	p.Sub = jsoniter.Get(bs, "sub").ToString()
 	p.RefreshSecond = jsoniter.Get(bs, "expires_in").ToInt64()
 
-	slog.Debug("Login params", "access_token", p.JwtToken, "refresh_token", p.refreshToken, "sub", p.Sub, "expires_in", p.RefreshSecond)
+	logger.Debug("Login params", "access_token", p.JwtToken, "refresh_token", p.refreshToken, "sub", p.Sub, "expires_in", p.RefreshSecond)
 	return nil
 }
 
@@ -128,7 +115,7 @@ func (p *PikPak) getCaptchaToken() (string, error) {
 	}
 	captchaToken := jsoniter.Get(bs, "captcha_token").ToString()
 
-	slog.Debug("Login captcha token", "captcha_token", captchaToken)
+	logger.Debug("Login captcha token", "captcha_token", captchaToken)
 	return captchaToken, nil
 }
 

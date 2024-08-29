@@ -21,7 +21,6 @@ import (
 
 	"github.com/52funny/pikpakhash"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/sirupsen/logrus"
 )
 
 type OssArgs struct {
@@ -101,11 +100,11 @@ START:
 	}
 	file := jsoniter.Get(bs, "file")
 	phase := file.Get("phase").ToString()
-	logrus.Debug("path: ", path, " phase: ", phase)
+	logger.Debug("UploadFile", "path: ", path, " phase: ", phase)
 
 	switch phase {
 	case "PHASE_TYPE_COMPLETE":
-		logrus.Debug(path, " upload file complete")
+		logger.Debug("UploadFile already exists")
 		return nil
 	case "PHASE_TYPE_PENDING":
 		// break switch
@@ -184,9 +183,6 @@ func uploadChunk(wait *sync.WaitGroup, ch chan Part, f *os.File, ChunkSize, file
 	var offset = part * ChunkSize
 	for offset < fileSize {
 		n, _ := f.ReadAt(buf, offset)
-		// if err != nil {
-		// 	// logrus.Error(err)
-		// }
 		if n > 0 {
 			value := url.Values{}
 			value.Add("uploadId", uploadId)
