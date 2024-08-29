@@ -10,5 +10,26 @@ import (
 func TestPathMustStartWithSlash(t *testing.T) {
 	path := "/abc"
 	p := pikpakapi.NewPath(path)
-	assert.Equal(t, p.String(), path)
+	assert.Equal(t, "abc", p.String())
+
+	path2 := "abc"
+	p2 := pikpakapi.NewPath(path2)
+	assert.Equal(t, "abc", p2.String())
+}
+
+func TestPathCut(t *testing.T) {
+	path := "/abc/def/ghi"
+	p := pikpakapi.NewPath(path)
+	assert.Equal(t, []string{"abc", "def", "ghi"}, p.Cut())
+	path2 := "/"
+	p2 := pikpakapi.NewPath(path2)
+	assert.Equal(t, []string{}, p2.Cut())
+
+	path3 := "//abc/def/ghi"
+	p3 := pikpakapi.NewPath(path3)
+	assert.Equal(t, []string{"abc", "def", "ghi"}, p3.Cut())
+
+	path4 := "//abc//def/ghi"
+	p4 := pikpakapi.NewPath(path4)
+	assert.Equal(t, []string{"abc", "", "def", "ghi"}, p4.Cut())
 }

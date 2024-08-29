@@ -1,13 +1,13 @@
 package pikpakapi
 
-import "strings"
+import (
+	"strings"
+)
 
 type Path string
 
 func NewPath(path string) Path {
-	if path == "" || path[0] != '/' {
-		panic("Path must start with /")
-	}
+	path = strings.TrimLeft(path, "/")
 	return Path(path)
 }
 
@@ -16,6 +16,10 @@ func (p *Path) String() string {
 }
 
 func (p *Path) Cut() []string {
-	arr := strings.Split(p.String()[1:], "/")
+	path := p.String()
+	if path == "" {
+		return []string{}
+	}
+	arr := strings.Split(path, "/")
 	return arr
 }
