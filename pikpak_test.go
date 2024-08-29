@@ -1,12 +1,12 @@
 package pikpakapi_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
 	"github.com/52funny/pikpakapi"
 	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
 )
 
 func ReadEnv() (string, string) {
@@ -20,7 +20,6 @@ func ReadEnv() (string, string) {
 func TestPikPak(t *testing.T) {
 	username, password := ReadEnv()
 	p := pikpakapi.NewPikPak(username, password)
-	p.Login()
-	fmt.Println(p.RefreshSecond)
-	fmt.Println(username, password)
+	err := p.Login()
+	assert.Nil(t, err)
 }

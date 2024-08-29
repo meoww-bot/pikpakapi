@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPathMustStartWithSlash(t *testing.T) {
+func TestPathWithDiffentStyle(t *testing.T) {
 	path := "/abc"
 	p := pikpakapi.NewPath(path)
 	assert.Equal(t, "abc", p.String())
@@ -15,6 +15,10 @@ func TestPathMustStartWithSlash(t *testing.T) {
 	path2 := "abc"
 	p2 := pikpakapi.NewPath(path2)
 	assert.Equal(t, "abc", p2.String())
+
+	path3 := "//abc/def"
+	p3 := pikpakapi.NewPath(path3)
+	assert.Equal(t, "abc/def", p3.String())
 }
 
 func TestPathCut(t *testing.T) {

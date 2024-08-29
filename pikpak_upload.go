@@ -6,7 +6,6 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -37,8 +36,6 @@ type OssArgs struct {
 // 256k
 var defaultChunkSize int64 = 1 << 18
 var Concurrent int64 = 1 << 4
-
-var ErrNotFoundFolder = errors.New("not found pikpak folder")
 
 func (p *PikPak) UploadFile(parentId, path string) error {
 	fileName := filepath.Base(path)
@@ -102,7 +99,6 @@ START:
 		}
 		return fmt.Errorf("upload file error: %s", jsoniter.Get(bs, "error").ToString())
 	}
-	// logrus.Debug(string(bs))
 	file := jsoniter.Get(bs, "file")
 	phase := file.Get("phase").ToString()
 	logrus.Debug("path: ", path, " phase: ", phase)

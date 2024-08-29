@@ -61,7 +61,7 @@ func (p *PikPak) lookupDirID(parentId string, dirName string) (string, error) {
 			kind := file.Get("kind").String()
 			name := file.Get("name").String()
 			trashed := file.Get("trashed").Bool()
-			if kind == "drive#folder" && name == dirName && !trashed {
+			if kind == KIND_FOLDER && name == dirName && !trashed {
 				id := file.Get("id").String()
 				// Setting the cache
 				p.cache.Set(NewTuple(id, dirName), id)
