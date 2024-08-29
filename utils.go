@@ -9,14 +9,14 @@ type Tuple[T1 comparable, T2 comparable] struct {
 	T2 T2
 }
 
-func NewTuple[T1 comparable, T2 comparable](t1 T1, t2 T2) Tuple[T1, T2] {
+func newTuple[T1 comparable, T2 comparable](t1 T1, t2 T2) Tuple[T1, T2] {
 	return Tuple[T1, T2]{
 		t1,
 		t2,
 	}
 }
 
-func NewCache[K comparable, V any]() *Cache[K, V] {
+func newCache[K comparable, V any]() *Cache[K, V] {
 	return &Cache[K, V]{
 		m: make(map[K]V),
 	}

@@ -30,7 +30,7 @@ func (p *PikPak) GetDirID(dir Path) (string, error) {
 // Look up the ID in the parentId directory that match the dirName name
 func (p *PikPak) lookupDirID(parentId string, dirName string) (string, error) {
 	// Check the cache, if the folder id is in the cache, then return it
-	if id, ok := p.cache.Get(NewTuple(parentId, dirName)); ok {
+	if id, ok := p.cache.Get(newTuple(parentId, dirName)); ok {
 		return id, nil
 	}
 
@@ -64,7 +64,7 @@ func (p *PikPak) lookupDirID(parentId string, dirName string) (string, error) {
 			if kind == KIND_FOLDER && name == dirName && !trashed {
 				id := file.Get("id").String()
 				// Setting the cache
-				p.cache.Set(NewTuple(id, dirName), id)
+				p.cache.Set(newTuple(id, dirName), id)
 				return id, nil
 			}
 		}

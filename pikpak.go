@@ -41,7 +41,7 @@ func NewPikPak(account, password string) PikPak {
 		Password: password,
 		DeviceId: hex.EncodeToString(n[:]),
 		client:   client,
-		cache:    NewCache[Tuple[string, string], string](),
+		cache:    newCache[Tuple[string, string], string](),
 	}
 
 }
