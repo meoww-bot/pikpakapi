@@ -26,7 +26,7 @@ type PikPak struct {
 	DeviceId      string `json:"deviceId"`
 	RefreshSecond int64  `json:"refreshSecond"`
 	client        *http.Client
-	cache         *Cache[Tuple[string, string], string]
+	cache         *cache[tuple[string, string], string]
 }
 
 func NewPikPak(account, password string) PikPak {
@@ -42,7 +42,7 @@ func NewPikPak(account, password string) PikPak {
 		Password: password,
 		DeviceId: hex.EncodeToString(n[:]),
 		client:   client,
-		cache:    newCache[Tuple[string, string], string](),
+		cache:    newCache[tuple[string, string], string](),
 	}
 
 }
