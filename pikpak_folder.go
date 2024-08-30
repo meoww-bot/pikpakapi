@@ -105,7 +105,7 @@ func (p *PikPak) CreateDir(dir Path) (string, error) {
 // parentId is parent folder id
 func (p *PikPak) createDir(parentID, dir string) (string, error) {
 	m := map[string]interface{}{
-		"kind":      "drive#folder",
+		"kind":      KIND_FOLDER,
 		"parent_id": parentID,
 		"name":      dir,
 	}

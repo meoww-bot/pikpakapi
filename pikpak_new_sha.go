@@ -15,7 +15,7 @@ func (p *PikPak) CreateShaFile(parentID, fileName, size, sha string) error {
 			"width":    "",
 			"height":   "",
 		},
-		"kind":        "drive#file",
+		"kind":        KIND_FILE,
 		"name":        fileName,
 		"size":        size,
 		"hash":        sha,

@@ -9,7 +9,7 @@ import (
 
 func (p *PikPak) CreateUrlFile(parentID, url string) error {
 	m := map[string]interface{}{
-		"kind":        "drive#file",
+		"kind":        KIND_FILE,
 		"upload_type": "UPLOAD_TYPE_URL",
 		"url": map[string]string{
 			"url": url,

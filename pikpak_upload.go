@@ -67,7 +67,7 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 			"width":    "",
 			"height":   "",
 		},
-		"kind":        "drive#file",
+		"kind":        KIND_FILE,
 		"name":        fileName,
 		"size":        fmt.Sprintf("%d", fileSize),
 		"hash":        hash,
