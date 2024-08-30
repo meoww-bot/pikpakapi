@@ -2,7 +2,6 @@ package pikpakapi
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -28,20 +27,22 @@ func (p *PikPak) GetDirID(dir Path) (string, error) {
 }
 
 // Look up the ID in the parentId directory that match the dirName name
-func (p *PikPak) lookupDirID(parentId string, dirName string) (string, error) {
+func (p *PikPak) lookupDirID(parentID string, dirName string) (string, error) {
 	// Check the cache, if the folder id is in the cache, then return it
-	if id, ok := p.cache.Get(newTuple(parentId, dirName)); ok {
+	if id, ok := p.cache.Get(newTuple(parentID, dirName)); ok {
 		return id, nil
 	}
 
 	value := url.Values{}
-	value.Add("parent_id", parentId)
+	value.Add("parent_id", parentID)
 	value.Add("page_token", "")
 	value.Add("with_audit", "false")
 	value.Add("thumbnail_size", "SIZE_LARGE")
 	value.Add("limit", "500")
+	// Avoid searching for trash
+	value.Add("filters", `{"phase":{"eq":"PHASE_TYPE_COMPLETE"},"trashed":{"eq":false}}`)
 	for {
-		req, err := http.NewRequest("GET", fmt.Sprintf("https://api-drive.mypikpak.com/drive/v1/files?"+value.Encode()), nil)
+		req, err := http.NewRequest("GET", "https://api-drive.mypikpak.com/drive/v1/files?"+value.Encode(), nil)
 		if err != nil {
 			return "", err
 		}
@@ -51,7 +52,7 @@ func (p *PikPak) lookupDirID(parentId string, dirName string) (string, error) {
 		req.Header.Set("X-Alt-Capability", "3")
 		req.Header.Set("X-Client-Version-Code", "10083")
 		req.Header.Set("X-Captcha-Token", p.CaptchaToken)
-		bs, err := p.sendWithErrHandle(req)
+		bs, err := p.sendWithErrHandle(req, nil)
 		if err != nil {
 			return "", err
 		}
@@ -64,7 +65,7 @@ func (p *PikPak) lookupDirID(parentId string, dirName string) (string, error) {
 			if kind == KIND_FOLDER && name == dirName && !trashed {
 				id := file.Get("id").String()
 				// Setting the cache
-				p.cache.Set(newTuple(id, dirName), id)
+				p.cache.Set(newTuple(parentID, dirName), id)
 				return id, nil
 			}
 		}
@@ -96,6 +97,10 @@ func (p *PikPak) CreateSubDir(parentID string, dir Path) (string, error) {
 	return parentID, nil
 }
 
+func (p *PikPak) CreateDir(dir Path) (string, error) {
+	return p.CreateSubDir("", dir)
+}
+
 // Create new folder in parent folder
 // parentId is parent folder id
 func (p *PikPak) createDir(parentID, dir string) (string, error) {
@@ -120,10 +125,12 @@ func (p *PikPak) createDir(parentID, dir string) (string, error) {
 	req.Header.Set("X-User-Region", "1")
 	req.Header.Set("X-Alt-Capability", "3")
 	req.Header.Set("Country", "CN")
-	bs, err = p.sendWithErrHandle(req)
+	bs, err = p.sendWithErrHandle(req, bs)
 	if err != nil {
 		return "", err
 	}
 	id := gjson.GetBytes(bs, "file.id").String()
+	// Setting the cache
+	p.cache.Set(newTuple(parentID, dir), id)
 	return id, nil
 }

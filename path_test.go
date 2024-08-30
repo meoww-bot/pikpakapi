@@ -37,3 +37,27 @@ func TestPathCut(t *testing.T) {
 	p4 := pikpakapi.NewPath(path4)
 	assert.Equal(t, []string{"abc", "", "def", "ghi"}, p4.Cut())
 }
+
+func TestPathParent(t *testing.T) {
+	path := "/abc/def/ghi"
+	p := pikpakapi.NewPath(path)
+	assert.Equal(t, "abc/def", string(p.Parent()))
+	path2 := "/"
+	p2 := pikpakapi.NewPath(path2)
+	assert.Equal(t, "", string(p2.Parent()))
+	path3 := "/abc/def//"
+	p3 := pikpakapi.NewPath(path3)
+	assert.Equal(t, "abc/def/", string(p3.Parent()))
+}
+
+func TestPathName(t *testing.T) {
+	path := "/abc/def/ghi"
+	p := pikpakapi.NewPath(path)
+	assert.Equal(t, "ghi", p.Name())
+	path2 := "/"
+	p2 := pikpakapi.NewPath(path2)
+	assert.Equal(t, "", p2.Name())
+	path3 := "/abc/def//"
+	p3 := pikpakapi.NewPath(path3)
+	assert.Equal(t, "", p3.Name())
+}

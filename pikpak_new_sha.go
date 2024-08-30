@@ -8,7 +8,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-func (p *PikPak) CreateShaFile(parentId, fileName, size, sha string) error {
+func (p *PikPak) CreateShaFile(parentID, fileName, size, sha string) error {
 	m := map[string]interface{}{
 		"body": map[string]string{
 			"duration": "",
@@ -24,8 +24,8 @@ func (p *PikPak) CreateShaFile(parentId, fileName, size, sha string) error {
 			"provider": "UPLOAD_TYPE_UNKNOWN",
 		},
 	}
-	if parentId != "" {
-		m["parent_id"] = parentId
+	if parentID != "" {
+		m["parent_id"] = parentID
 	}
 	bs, err := jsoniter.Marshal(&m)
 	if err != nil {
@@ -43,7 +43,7 @@ func (p *PikPak) CreateShaFile(parentId, fileName, size, sha string) error {
 	req.Header.Set("X-User-Region", "1")
 	req.Header.Set("X-Alt-Capability", "3")
 	req.Header.Set("Country", "CN")
-	bs, err = p.sendWithErrHandle(req)
+	bs, err = p.sendWithErrHandle(req, bs)
 	if err != nil {
 		return err
 	}

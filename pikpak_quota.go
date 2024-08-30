@@ -12,7 +12,7 @@ func (p *PikPak) GetQuota() (Quota, error) {
 	if err != nil {
 		return Quota{}, err
 	}
-	bs, err := p.sendWithErrHandle(req)
+	bs, err := p.sendWithErrHandle(req, nil)
 	if err != nil {
 		return Quota{}, err
 	}

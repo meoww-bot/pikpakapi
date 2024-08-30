@@ -20,7 +20,7 @@ func (p *PikPak) DeleteBatchFiles(ids ...string) error {
 	if err != nil {
 		return err
 	}
-	bs, err = p.sendWithErrHandle(req)
+	bs, err = p.sendWithErrHandle(req, bs)
 	if err != nil {
 		return err
 	}

@@ -32,6 +32,25 @@
 
 ```json
 {
+  "error": "captcha_invalid",
+  "error_code": 4002,
+  "error_description": "meta.username expect ****, but got map[captcha_sign:**** client_version:**** package_name:**** result:accept timestamp:**** user_id:], please check captcha init params",
+  "details": [
+    {
+      "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+      "reason": "meta.username expect ****, but got map[captcha_sign:**** client_version:**** package_name:**** result:accept timestamp:**** user_id:], please check captcha init params"
+    },
+    {
+      "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+      "locale": "zh",
+      "message": "安全验证未通过，请重新验证"
+    }
+  ]
+}
+```
+
+```json
+{
   "error": "invalid_grant",
   "error_code": 4126,
   "error_description": "refresh token **** has been refresh at 2024-08-29T20:41:24+08:00",

@@ -34,9 +34,11 @@ func init() {
 func (p *PikPak) AuthCaptchaToken(action string) error {
 	m := make(map[string]interface{})
 	m["action"] = action
-	m["captcha_token"] = p.CaptchaToken
 	m["client_id"] = clientID
 	m["device_id"] = p.DeviceId
+	if p.CaptchaToken != "" {
+		m["captcha_token"] = p.CaptchaToken
+	}
 	ts := fmt.Sprintf("%d", time.Now().UnixMilli())
 	str := clientID + client_version + package_name + p.DeviceId + ts
 
@@ -54,7 +56,7 @@ func (p *PikPak) AuthCaptchaToken(action string) error {
 		"client_version": client_version,
 		"timestamp":      ts,
 	}
-	m["redirect_uri"] = "ttps://api.mypikpak.com/v1/auth/callback"
+	m["redirect_uri"] = "https://api.mypikpak.com/v1/auth/callback"
 	bs, err := jsoniter.Marshal(m)
 	if err != nil {
 		return err
@@ -67,6 +69,11 @@ func (p *PikPak) AuthCaptchaToken(action string) error {
 	bs, err = p.send(req)
 	if err != nil {
 		return err
+	}
+	errorCode := gjson.GetBytes(bs, "error_code").Int()
+	if errorCode != 0 {
+		errorMessage := gjson.GetBytes(bs, "error").String()
+		return fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
 	}
 	p.CaptchaToken = gjson.GetBytes(bs, "captcha_token").String()
 	return nil

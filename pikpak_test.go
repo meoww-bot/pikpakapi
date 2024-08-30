@@ -9,17 +9,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func ReadEnv() (string, string) {
+func ReadEnv() (string, string, string) {
 	// dotenv := godotenv.Load()
 	godotenv.Load()
 	u := os.Getenv("USERNAME")
 	p := os.Getenv("PASSWORD")
-	return u, p
+	proxy := os.Getenv("PROXY")
+	return u, p, proxy
 }
 
 func BuildPikPak() pikpakapi.PikPak {
-	username, password := ReadEnv()
-	return pikpakapi.NewPikPak(username, password)
+	username, password, proxy := ReadEnv()
+	p := pikpakapi.NewPikPak(username, password)
+	if proxy != "" {
+		p.SetProxy(proxy)
+	}
+	return p
 }
 
 func TestPikPakLogin(t *testing.T) {
@@ -34,7 +39,7 @@ func TestPikPakFiles(t *testing.T) {
 	id, err := p.GetDirID(pikpakapi.NewPath("/"))
 	assert.Nil(t, err)
 	assert.Equal(t, "", id)
-	lists, err := p.GetFolderFileStatList(id)
+	lists, err := p.GetDirFilesStat(id)
 	assert.Nil(t, err)
 	assert.NotEmpty(t, lists)
 }

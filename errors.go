@@ -3,5 +3,6 @@ package pikpakapi
 import "errors"
 
 var (
-	ErrNotFoundFolder = errors.New("Not found pikpak folder")
+	ErrNotFoundFolder = errors.New("Not found PikPak folder")
+	ErrNotFoundFile   = errors.New("Not found PikPak file")
 )

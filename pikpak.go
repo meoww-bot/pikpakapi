@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/tidwall/gjson"
@@ -36,7 +37,7 @@ func NewPikPak(account, password string) PikPak {
 		},
 	}
 
-	n := md5.Sum([]byte(account))
+	n := md5.Sum([]byte(account + clientID))
 	return PikPak{
 		Account:  account,
 		Password: password,
@@ -44,21 +45,37 @@ func NewPikPak(account, password string) PikPak {
 		client:   client,
 		cache:    newCache[tuple[string, string], string](),
 	}
-
 }
 
+// Default proxy from environment
+func (p *PikPak) SetDefaultProxy() {
+	p.client.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+	}
+}
+
+// Seting the cumstom proxy
+func (p *PikPak) SetProxy(proxy string) error {
+	u, err := url.Parse(proxy)
+	if err != nil {
+		return err
+	}
+	p.client.Transport = &http.Transport{
+		Proxy: http.ProxyURL(u),
+	}
+	return nil
+}
+
+// Login method
 func (p *PikPak) Login() error {
-	captchaToken, err := p.getCaptchaToken()
+	err := p.authSigninCaptchaToken()
 	if err != nil {
 		return err
 	}
 	m := make(map[string]string)
 	m["client_id"] = clientID
-	m["client_secret"] = clientSecret
-	m["grant_type"] = "password"
 	m["username"] = p.Account
 	m["password"] = p.Password
-	m["captcha_token"] = captchaToken
 	bs, err := jsoniter.Marshal(&m)
 	if err != nil {
 		return err
@@ -69,9 +86,16 @@ func (p *PikPak) Login() error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	req.Header.Set("X-Captcha-Token", p.CaptchaToken)
+
 	bs, err = p.send(req)
 	if err != nil {
 		return err
+	}
+	errorCode := gjson.GetBytes(bs, "error_code").Int()
+	if errorCode != 0 {
+		errorMessage := gjson.GetBytes(bs, "error").String()
+		return fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
 	}
 
 	p.JwtToken = jsoniter.Get(bs, "access_token").ToString()
@@ -85,31 +109,38 @@ func (p *PikPak) Login() error {
 }
 
 // Get the captcha token
-func (p *PikPak) getCaptchaToken() (string, error) {
+func (p *PikPak) authSigninCaptchaToken() error {
 	m := make(map[string]any)
 	m["client_id"] = clientID
 	m["device_id"] = p.DeviceId
+	m["captcha_token"] = p.CaptchaToken
 	m["action"] = "POST:/v1/auth/signin"
 	m["meta"] = map[string]string{
 		"username": p.Account,
 	}
 	body, err := jsoniter.Marshal(&m)
 	if err != nil {
-		return "", err
+		return err
 	}
 	req, err := http.NewRequest("POST", "https://user.mypikpak.com/v1/shield/captcha/init", bytes.NewBuffer(body))
 	if err != nil {
-		return "", err
+		return err
 	}
 	req.Header.Add("Content-Type", "application/json")
 	bs, err := p.send(req)
 	if err != nil {
-		return "", err
+		return err
+	}
+	errorCode := gjson.GetBytes(bs, "error_code").Int()
+	if errorCode != 0 {
+		errorMessage := gjson.GetBytes(bs, "error").String()
+		return fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
 	}
 
 	captchaToken := jsoniter.Get(bs, "captcha_token").ToString()
 	logger.Debug("Login captcha token", "captcha_token", captchaToken)
-	return captchaToken, nil
+	p.CaptchaToken = captchaToken
+	return nil
 }
 
 // Send the request
@@ -133,21 +164,18 @@ func (p *PikPak) send(req *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	errorCode := gjson.GetBytes(bs, "error_code").Int()
-	if errorCode != 0 {
-		errorMessage := gjson.GetBytes(bs, "error").String()
-		return nil, fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
-	}
+
 	return bs, nil
 }
 
 // Send the request with error handling
-func (p *PikPak) sendWithErrHandle(req *http.Request) ([]byte, error) {
+func (p *PikPak) sendWithErrHandle(req *http.Request, body []byte) ([]byte, error) {
 	if p.JwtToken != "" {
 		req.Header.Set("Authorization", "Bearer "+p.JwtToken)
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("X-Device-Id", p.DeviceId)
+	headers := req.Header.Clone()
 
 START:
 	// Send the request
@@ -168,6 +196,11 @@ START:
 		err := p.errorCodeHandle(errorCode, req)
 		// Repeat the request
 		if err == nil {
+			req, err = http.NewRequest(req.Method, req.URL.String(), bytes.NewBuffer(body))
+			if err != nil {
+				return nil, err
+			}
+			req.Header = headers
 			goto START
 		}
 		errorMessage := gjson.GetBytes(bs, "error").String()

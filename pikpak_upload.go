@@ -49,7 +49,7 @@ type OssArgs struct {
 	SecurityToken   string `json:"security_token"`
 }
 
-func (p *PikPak) UploadFile(parentId, path string) error {
+func (p *PikPak) UploadFile(parentID, path string) error {
 	fileName := filepath.Base(path)
 	fileState, err := os.Stat(path)
 	if err != nil {
@@ -76,8 +76,8 @@ func (p *PikPak) UploadFile(parentId, path string) error {
 			"provider": "UPLOAD_TYPE_UNKNOWN",
 		},
 	}
-	if parentId != "" {
-		m["parent_id"] = parentId
+	if parentID != "" {
+		m["parent_id"] = parentID
 	}
 	bs, err := jsoniter.Marshal(&m)
 	if err != nil {
@@ -95,7 +95,7 @@ func (p *PikPak) UploadFile(parentId, path string) error {
 	req.Header.Set("X-User-Region", "1")
 	req.Header.Set("X-Alt-Capability", "3")
 	req.Header.Set("Country", "CN")
-	bs, err = p.sendWithErrHandle(req)
+	bs, err = p.sendWithErrHandle(req, bs)
 	if err != nil {
 		return err
 	}

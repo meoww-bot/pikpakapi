@@ -7,7 +7,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-func (p *PikPak) CreateUrlFile(parentId, url string) error {
+func (p *PikPak) CreateUrlFile(parentID, url string) error {
 	m := map[string]interface{}{
 		"kind":        "drive#file",
 		"upload_type": "UPLOAD_TYPE_URL",
@@ -15,8 +15,8 @@ func (p *PikPak) CreateUrlFile(parentId, url string) error {
 			"url": url,
 		},
 	}
-	if parentId != "" {
-		m["parent_id"] = parentId
+	if parentID != "" {
+		m["parent_id"] = parentID
 	}
 	bs, err := jsoniter.Marshal(&m)
 	if err != nil {
@@ -34,7 +34,7 @@ func (p *PikPak) CreateUrlFile(parentId, url string) error {
 	req.Header.Set("X-User-Region", "1")
 	req.Header.Set("X-Alt-Capability", "3")
 	req.Header.Set("Country", "CN")
-	bs, err = p.sendWithErrHandle(req)
+	bs, err = p.sendWithErrHandle(req, bs)
 	if err != nil {
 		return err
 	}

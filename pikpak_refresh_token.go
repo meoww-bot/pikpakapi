@@ -2,6 +2,7 @@ package pikpakapi
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
@@ -27,6 +28,11 @@ func (p *PikPak) RefreshToken() error {
 	bs, err = p.send(req)
 	if err != nil {
 		return err
+	}
+	errorCode := gjson.GetBytes(bs, "error_code").Int()
+	if errorCode != 0 {
+		errorMessage := gjson.GetBytes(bs, "error").String()
+		return fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
 	}
 	p.JwtToken = gjson.GetBytes(bs, "access_token").String()
 	p.refreshToken = gjson.GetBytes(bs, "refresh_token").String()
