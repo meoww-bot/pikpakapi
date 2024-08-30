@@ -2,7 +2,6 @@ package pikpakapi
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
@@ -25,18 +24,9 @@ func (p *PikPak) RefreshToken() error {
 	if err != nil {
 		return err
 	}
-	bs, err = p.sendRequest(req)
+	bs, err = p.send(req)
 	if err != nil {
 		return err
-	}
-	error_code := gjson.GetBytes(bs, "error_code").Int()
-	if error_code != 0 {
-		// refresh token failed
-		if error_code == 4126 {
-			// 重新登录
-			return p.Login()
-		}
-		return fmt.Errorf("refresh token error message: %d", gjson.GetBytes(bs, "error").Int())
 	}
 	p.JwtToken = gjson.GetBytes(bs, "access_token").String()
 	p.refreshToken = gjson.GetBytes(bs, "refresh_token").String()

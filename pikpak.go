@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 )
 
 const userAgent = `ANDROID-com.pikcloud.pikpak/1.21.0`
@@ -68,15 +69,9 @@ func (p *PikPak) Login() error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	bs, err = p.sendRequest(req)
+	bs, err = p.send(req)
 	if err != nil {
 		return err
-	}
-
-	error_code := jsoniter.Get(bs, "error_code").ToInt()
-
-	if error_code != 0 {
-		return fmt.Errorf("login error: %v", jsoniter.Get(bs, "error").ToString())
 	}
 
 	p.JwtToken = jsoniter.Get(bs, "access_token").ToString()
@@ -85,14 +80,16 @@ func (p *PikPak) Login() error {
 	p.RefreshSecond = jsoniter.Get(bs, "expires_in").ToInt64()
 
 	logger.Debug("Login params", "access_token", p.JwtToken, "refresh_token", p.refreshToken, "sub", p.Sub, "expires_in", p.RefreshSecond)
+
 	return nil
 }
 
+// Get the captcha token
 func (p *PikPak) getCaptchaToken() (string, error) {
 	m := make(map[string]any)
 	m["client_id"] = clientID
 	m["device_id"] = p.DeviceId
-	m["action"] = "POST:https://user.mypikpak.com/v1/auth/signin"
+	m["action"] = "POST:/v1/auth/signin"
 	m["meta"] = map[string]string{
 		"username": p.Account,
 	}
@@ -105,38 +102,76 @@ func (p *PikPak) getCaptchaToken() (string, error) {
 		return "", err
 	}
 	req.Header.Add("Content-Type", "application/json")
-	bs, err := p.sendRequest(req)
+	bs, err := p.send(req)
 	if err != nil {
 		return "", err
 	}
-	error_code := jsoniter.Get(bs, "error_code").ToInt()
-	if error_code != 0 {
-		return "", fmt.Errorf("get captcha error: %v", jsoniter.Get(bs, "error").ToString())
-	}
-	captchaToken := jsoniter.Get(bs, "captcha_token").ToString()
 
+	captchaToken := jsoniter.Get(bs, "captcha_token").ToString()
 	logger.Debug("Login captcha token", "captcha_token", captchaToken)
 	return captchaToken, nil
 }
 
-func (p *PikPak) sendRequest(req *http.Request) ([]byte, error) {
-	p.setHeader(req)
-	resp, err := p.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	bs, err := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
-}
-
-func (p *PikPak) setHeader(req *http.Request) {
+// Send the request
+func (p *PikPak) send(req *http.Request) ([]byte, error) {
+	// Setting the header
 	if p.JwtToken != "" {
 		req.Header.Set("Authorization", "Bearer "+p.JwtToken)
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("X-Device-Id", p.DeviceId)
+
+	// Send the request
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Read the response
+	bs, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	errorCode := gjson.GetBytes(bs, "error_code").Int()
+	if errorCode != 0 {
+		errorMessage := gjson.GetBytes(bs, "error").String()
+		return nil, fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
+	}
+	return bs, nil
+}
+
+// Send the request with error handling
+func (p *PikPak) sendWithErrHandle(req *http.Request) ([]byte, error) {
+	if p.JwtToken != "" {
+		req.Header.Set("Authorization", "Bearer "+p.JwtToken)
+	}
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("X-Device-Id", p.DeviceId)
+
+START:
+	// Send the request
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Read the response
+	bs, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	errorCode := gjson.GetBytes(bs, "error_code").Int()
+	if errorCode != 0 {
+		// Handle the error code, if successful handling, then repeat the request
+		err := p.errorCodeHandle(errorCode, req)
+		// Repeat the request
+		if err == nil {
+			goto START
+		}
+		errorMessage := gjson.GetBytes(bs, "error").String()
+		return nil, fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
+	}
+	return bs, nil
 }

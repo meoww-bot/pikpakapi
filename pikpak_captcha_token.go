@@ -8,6 +8,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 )
 
 const package_name = `com.pikcloud.pikpak`
@@ -28,6 +29,8 @@ func init() {
 	}
 }
 
+// METHOD:PATH
+// eg: POST:/v1/shield/captcha/init
 func (p *PikPak) AuthCaptchaToken(action string) error {
 	m := make(map[string]interface{})
 	m["action"] = action
@@ -61,14 +64,10 @@ func (p *PikPak) AuthCaptchaToken(action string) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	bs, err = p.sendRequest(req)
+	bs, err = p.send(req)
 	if err != nil {
 		return err
 	}
-	error_code := jsoniter.Get(bs, "error_code").ToInt()
-	if error_code != 0 {
-		return fmt.Errorf("auth captcha token error: %s", jsoniter.Get(bs, "error").ToString())
-	}
-	p.CaptchaToken = jsoniter.Get(bs, "captcha_token").ToString()
+	p.CaptchaToken = gjson.GetBytes(bs, "captcha_token").String()
 	return nil
 }

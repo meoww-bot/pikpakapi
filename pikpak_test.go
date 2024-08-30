@@ -17,9 +17,24 @@ func ReadEnv() (string, string) {
 	return u, p
 }
 
-func TestPikPak(t *testing.T) {
+func BuildPikPak() pikpakapi.PikPak {
 	username, password := ReadEnv()
-	p := pikpakapi.NewPikPak(username, password)
+	return pikpakapi.NewPikPak(username, password)
+}
+
+func TestPikPakLogin(t *testing.T) {
+	p := BuildPikPak()
 	err := p.Login()
 	assert.Nil(t, err)
+}
+
+func TestPikPakFiles(t *testing.T) {
+	p := BuildPikPak()
+	p.Login()
+	id, err := p.GetDirID(pikpakapi.NewPath("/"))
+	assert.Nil(t, err)
+	assert.Equal(t, "", id)
+	lists, err := p.GetFolderFileStatList(id)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, lists)
 }

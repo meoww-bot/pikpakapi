@@ -1,5 +1,21 @@
 ```json
 {
+  "error": "captcha_invalid",
+  "error_code": 9,
+  "error_url": "",
+  "error_description": "验证码无效",
+  "error_details": [
+    {
+      "@type": "type.googleapis.com/google.rpc.DebugInfo",
+      "stack_entries": [],
+      "detail": "failed to decode"
+    }
+  ]
+}
+```
+
+```json
+{
   "error": "unauthenticated",
   "error_code": 16,
   "error_url": "",

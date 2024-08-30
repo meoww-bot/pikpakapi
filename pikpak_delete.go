@@ -2,11 +2,9 @@ package pikpakapi
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/tidwall/gjson"
 )
 
 func (p *PikPak) DeleteBatchFiles(ids ...string) error {
@@ -22,18 +20,9 @@ func (p *PikPak) DeleteBatchFiles(ids ...string) error {
 	if err != nil {
 		return err
 	}
-	bs, err = p.sendRequest(req)
+	bs, err = p.sendWithErrHandle(req)
 	if err != nil {
 		return err
-	}
-	error_code := gjson.GetBytes(bs, "error_code").Int()
-	if error_code != 0 {
-		// refresh token failed
-		if error_code == 4126 {
-			// 重新登录
-			return p.Login()
-		}
-		return fmt.Errorf("delete file error: %v", gjson.GetBytes(bs, "error").Int())
 	}
 	return nil
 }
