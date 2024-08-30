@@ -3,6 +3,7 @@ package pikpakapi
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -37,7 +38,9 @@ func NewPikPak(account, password string) PikPak {
 		},
 	}
 
-	n := md5.Sum([]byte(account + clientID))
+	seed := make([]byte, 16)
+	io.ReadFull(rand.Reader, seed)
+	n := md5.Sum(append([]byte(account+clientID), seed...))
 	return PikPak{
 		Account:  account,
 		Password: password,
@@ -168,15 +171,18 @@ func (p *PikPak) send(req *http.Request) ([]byte, error) {
 	return bs, nil
 }
 
-// Send the request with error handling
-func (p *PikPak) sendWithErrHandle(req *http.Request, body []byte) ([]byte, error) {
+func (p *PikPak) addHeader(req *http.Request) {
 	if p.JwtToken != "" {
 		req.Header.Set("Authorization", "Bearer "+p.JwtToken)
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("X-Device-Id", p.DeviceId)
-	headers := req.Header.Clone()
+}
 
+// Send the request with error handling
+func (p *PikPak) sendWithErrHandle(req *http.Request, body []byte) ([]byte, error) {
+	// Add the header
+	p.addHeader(req)
 START:
 	// Send the request
 	resp, err := p.client.Do(req)
@@ -200,7 +206,7 @@ START:
 			if err != nil {
 				return nil, err
 			}
-			req.Header = headers
+			p.addHeader(req)
 			goto START
 		}
 		errorMessage := gjson.GetBytes(bs, "error").String()

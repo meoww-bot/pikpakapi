@@ -33,6 +33,16 @@ func TestPikPakLogin(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestPikPakChangeJwtToken(t *testing.T) {
+	p := BuildPikPak()
+	err := p.Login()
+	assert.Nil(t, err)
+	p.JwtToken = "123456"
+	stats, err := p.GetDirFilesStatByPath(pikpakapi.NewPath("/"))
+	assert.Nil(t, err)
+	assert.NotEmpty(t, stats)
+}
+
 func TestPikPakFiles(t *testing.T) {
 	p := BuildPikPak()
 	p.Login()

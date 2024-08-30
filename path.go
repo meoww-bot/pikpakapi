@@ -4,15 +4,17 @@ import (
 	"strings"
 )
 
-type Path string
+type Path struct {
+	inner string
+}
 
 func NewPath(path string) Path {
 	path = strings.TrimLeft(path, "/")
-	return Path(path)
+	return Path{inner: path}
 }
 
-func (p *Path) String() string {
-	return string(*p)
+func (p Path) String() string {
+	return p.inner
 }
 
 func (p *Path) Cut() []string {
@@ -27,13 +29,13 @@ func (p *Path) Cut() []string {
 func (p *Path) Parent() Path {
 	path := p.String()
 	if path == "" {
-		return ""
+		return NewPath("")
 	}
 	arr := strings.Split(path, "/")
 	if len(arr) == 1 {
-		return ""
+		return NewPath("")
 	}
-	return Path(strings.Join(arr[:len(arr)-1], "/"))
+	return Path{inner: strings.Join(arr[:len(arr)-1], "/")}
 }
 
 func (p *Path) Name() string {
