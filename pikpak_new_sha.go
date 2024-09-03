@@ -36,13 +36,7 @@ func (p *PikPak) CreateShaFile(parentID, fileName, size, sha string) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
-	req.Header.Set("Product_flavor_name", "cha")
 	req.Header.Set("X-Captcha-Token", p.CaptchaToken)
-	req.Header.Set("X-Client-Version-Code", "10083")
-	req.Header.Set("X-Peer-Id", p.DeviceId)
-	req.Header.Set("X-User-Region", "1")
-	req.Header.Set("X-Alt-Capability", "3")
-	req.Header.Set("Country", "CN")
 	bs, err = p.sendWithErrHandle(req, bs)
 	if err != nil {
 		return err
