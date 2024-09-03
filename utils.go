@@ -1,7 +1,9 @@
 package pikpakapi
 
-type cache[K comparable, V any] struct {
-	m map[K]V
+import "sync"
+
+type cache struct {
+	m sync.Map
 }
 
 type tuple[T1 comparable, T2 comparable] struct {
@@ -16,17 +18,20 @@ func newTuple[T1 comparable, T2 comparable](t1 T1, t2 T2) tuple[T1, T2] {
 	}
 }
 
-func newCache[K comparable, V any]() *cache[K, V] {
-	return &cache[K, V]{
-		m: make(map[K]V),
+func newCache() *cache {
+	return &cache{
+		m: sync.Map{},
 	}
 }
 
-func (c *cache[K, V]) Get(key K) (V, bool) {
-	v, ok := c.m[key]
-	return v, ok
+func (c *cache) Get(key tuple[string, string]) (string, bool) {
+	v, ok := c.m.Load(key)
+	if !ok {
+		return "", false
+	}
+	return v.(string), ok
 }
 
-func (c *cache[K, V]) Set(key K, value V) {
-	c.m[key] = value
+func (c *cache) Set(key tuple[string, string], value string) {
+	c.m.Store(key, value)
 }
