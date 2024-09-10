@@ -32,15 +32,16 @@ type header struct {
 	val string
 }
 
-type CompleteMultipartUpload struct {
-	Part []Part `xml:"Part"`
+type completeMultipartUpload struct {
+	Part []part `xml:"Part"`
 }
-type Part struct {
+
+type part struct {
 	PartNumber string `xml:"PartNumber"`
 	ETag       string `xml:"ETag"`
 }
 
-type OssArgs struct {
+type ossArgs struct {
 	Bucket          string `json:"bucket"`
 	AccessKeyId     string `json:"access_key_id"`
 	AccessKeySecret string `json:"access_key_secret"`
@@ -119,7 +120,7 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 	endpoint := params.Get("endpoint").ToString()
 	key := params.Get("key").ToString()
 	securityToken := params.Get("security_token").ToString()
-	ossArgs := OssArgs{
+	ossArgs := ossArgs{
 		Bucket:          bucket,
 		AccessKeyId:     accessKeyId,
 		AccessKeySecret: accessKeySecret,
@@ -138,7 +139,7 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 
 	wait := new(sync.WaitGroup)
 	in_wait := new(sync.WaitGroup)
-	ch := make(chan Part, Concurrent)
+	ch := make(chan part, Concurrent)
 
 	var chunkSize = int64(math.Ceil(float64(fileSize) / 10000))
 	if chunkSize < defaultChunkSize {
@@ -149,7 +150,7 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 		wait.Add(1)
 		go uploadChunk(wait, ch, f, chunkSize, fileSize, i, ossArgs, uploadId)
 	}
-	donePartSlice := make([]Part, 0)
+	donePartSlice := make([]part, 0)
 	in_wait.Add(1)
 	go func() {
 		defer in_wait.Done()
@@ -165,7 +166,7 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 		jNum, _ := strconv.Atoi(donePartSlice[j].PartNumber)
 		return iNum < jNum
 	})
-	args := CompleteMultipartUpload{
+	args := completeMultipartUpload{
 		Part: donePartSlice,
 	}
 	err = p.afterUpload(&args, ossArgs, uploadId)
@@ -175,19 +176,19 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 	return nil
 }
 
-func uploadChunk(wait *sync.WaitGroup, ch chan Part, f *os.File, ChunkSize, fileSize int64, part int64, ossArgs OssArgs, uploadId string) {
+func uploadChunk(wait *sync.WaitGroup, ch chan part, f *os.File, ChunkSize, fileSize int64, partSize int64, ossArgs ossArgs, uploadId string) {
 	defer wait.Done()
-	if part*ChunkSize >= fileSize {
+	if partSize*ChunkSize >= fileSize {
 		return
 	}
 	buf := make([]byte, ChunkSize)
-	var offset = part * ChunkSize
+	var offset = partSize * ChunkSize
 	for offset < fileSize {
 		n, _ := f.ReadAt(buf, offset)
 		if n > 0 {
 			value := url.Values{}
 			value.Add("uploadId", uploadId)
-			value.Add("partNumber", fmt.Sprintf("%d", part+1))
+			value.Add("partNumber", fmt.Sprintf("%d", partSize+1))
 			req, err := http.NewRequest("PUT", fmt.Sprintf("https://%s/%s?%s",
 				ossArgs.EndPoint,
 				ossArgs.Key,
@@ -207,19 +208,19 @@ func uploadChunk(wait *sync.WaitGroup, ch chan Part, f *os.File, ChunkSize, file
 			}
 			// bs, _ := io.ReadAll(resp.Body)
 			eTag := strings.Trim(resp.Header.Get("ETag"), "\"")
-			p := Part{
-				PartNumber: fmt.Sprintf("%d", part+1),
+			p := part{
+				PartNumber: fmt.Sprintf("%d", partSize+1),
 				ETag:       eTag,
 			}
 			ch <- p
 			resp.Body.Close()
 		}
-		part = part + Concurrent
-		offset = part * ChunkSize
+		partSize = partSize + Concurrent
+		offset = partSize * ChunkSize
 	}
 }
 
-func hmacAuthorization(req *http.Request, body []byte, time time.Time, ossArgs OssArgs) string {
+func hmacAuthorization(req *http.Request, body []byte, time time.Time, ossArgs ossArgs) string {
 	date := time.UTC().Format(http.TimeFormat)
 	stringBuilder := new(strings.Builder)
 	stringBuilder.WriteString(req.Method + "\n")
@@ -258,7 +259,7 @@ func hmacAuthorization(req *http.Request, body []byte, time time.Time, ossArgs O
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func (p *PikPak) beforeUpload(ossArgs OssArgs) string {
+func (p *PikPak) beforeUpload(ossArgs ossArgs) string {
 	req, err := http.NewRequest("POST", "https://"+ossArgs.EndPoint+"/"+ossArgs.Key+"?uploads", nil)
 	if err != nil {
 		return ""
@@ -298,7 +299,7 @@ func (p *PikPak) beforeUpload(ossArgs OssArgs) string {
 	return res.UploadId
 }
 
-func (p *PikPak) afterUpload(args *CompleteMultipartUpload, ossArgs OssArgs, uploadId string) error {
+func (p *PikPak) afterUpload(args *completeMultipartUpload, ossArgs ossArgs, uploadId string) error {
 	bs, err := xml.Marshal(args)
 	if err != nil {
 		return err

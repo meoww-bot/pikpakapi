@@ -171,14 +171,6 @@ func (p *PikPak) send(req *http.Request) ([]byte, error) {
 	return bs, nil
 }
 
-func (p *PikPak) addHeader(req *http.Request) {
-	if p.JwtToken != "" {
-		req.Header.Set("Authorization", "Bearer "+p.JwtToken)
-	}
-	req.Header.Set("User-Agent", userAgent)
-	req.Header.Set("X-Device-Id", p.DeviceId)
-}
-
 // Send the request with error handling
 func (p *PikPak) sendWithErrHandle(req *http.Request, body []byte) ([]byte, error) {
 	// Add the header
@@ -213,4 +205,13 @@ START:
 		return nil, fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
 	}
 	return bs, nil
+}
+
+// Setting the header
+func (p *PikPak) addHeader(req *http.Request) {
+	if p.JwtToken != "" {
+		req.Header.Set("Authorization", "Bearer "+p.JwtToken)
+	}
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("X-Device-Id", p.DeviceId)
 }
