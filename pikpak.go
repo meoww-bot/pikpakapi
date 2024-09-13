@@ -191,7 +191,7 @@ START:
 	errorCode := gjson.GetBytes(bs, "error_code").Int()
 	if errorCode != 0 {
 		// Handle the error code, if successful handling, then repeat the request
-		err := p.errorCodeHandle(errorCode, req)
+		err := p.errorCodeHandler(errorCode, req)
 		// Repeat the request
 		if err == nil {
 			req, err = http.NewRequest(req.Method, req.URL.String(), bytes.NewBuffer(body))

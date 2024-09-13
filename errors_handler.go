@@ -6,7 +6,7 @@ import (
 )
 
 // It's handles some simple error codes, returns true when error handling is complete, otherwise returns false.
-func (p *PikPak) errorCodeHandle(code int64, req *http.Request) error {
+func (p *PikPak) errorCodeHandler(code int64, req *http.Request) error {
 	switch code {
 	case 9:
 		err := p.AuthCaptchaToken(fmt.Sprintf("%s:%s", req.Method, req.URL.Path))
