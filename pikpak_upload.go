@@ -21,6 +21,7 @@ import (
 
 	"github.com/52funny/pikpakhash"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 )
 
 // 256k
@@ -32,7 +33,7 @@ type header struct {
 	val string
 }
 
-type completeMultipartUpload struct {
+type CompleteMultipartUpload struct {
 	Part []part `xml:"Part"`
 }
 
@@ -50,17 +51,17 @@ type ossArgs struct {
 	SecurityToken   string `json:"security_token"`
 }
 
-func (p *PikPak) UploadFile(parentID, path string) error {
+func (p *PikPak) UploadFile(parentID, path string) (string, error) {
 	fileName := filepath.Base(path)
 	fileState, err := os.Stat(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fileSize := fileState.Size()
 	ph := pikpakhash.Default()
 	hash, err := ph.HashFromPath(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	m := map[string]interface{}{
 		"body": map[string]string{
@@ -78,15 +79,17 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 		},
 	}
 	if parentID != "" {
+		// ParentID equals to "" means upload to root directory
+		// If parent_id is not present, the file will be uploaded to the "My Upload" folder
 		m["parent_id"] = parentID
 	}
 	bs, err := jsoniter.Marshal(&m)
 	if err != nil {
-		return err
+		return "", err
 	}
 	req, err := http.NewRequest("POST", "https://api-drive.mypikpak.com/drive/v1/files", bytes.NewBuffer(bs))
 	if err != nil {
-		return err
+		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Product_flavor_name", "cha")
@@ -98,28 +101,30 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 	req.Header.Set("Country", "CN")
 	bs, err = p.sendWithErrHandle(req, bs)
 	if err != nil {
-		return err
+		return "", err
 	}
-	file := jsoniter.Get(bs, "file")
-	phase := file.Get("phase").ToString()
+	file := gjson.GetBytes(bs, "file")
+	phase := file.Get("phase").String()
+	fileID := file.Get("id").String()
 	logger.Debug("UploadFile", "path: ", path, " phase: ", phase)
 
 	switch phase {
 	case "PHASE_TYPE_COMPLETE":
 		logger.Debug("UploadFile already exists")
-		return nil
+		return fileID, nil
 	case "PHASE_TYPE_PENDING":
 		// break switch
 		break
 	}
-	params := jsoniter.Get(bs, "resumable").Get("params")
+	params := gjson.GetBytes(bs, "resumable.params")
 
-	accessKeyId := params.Get("access_key_id").ToString()
-	accessKeySecret := params.Get("access_key_secret").ToString()
-	bucket := params.Get("bucket").ToString()
-	endpoint := params.Get("endpoint").ToString()
-	key := params.Get("key").ToString()
-	securityToken := params.Get("security_token").ToString()
+	accessKeyId := params.Get("access_key_id").String()
+	accessKeySecret := params.Get("access_key_secret").String()
+	bucket := params.Get("bucket").String()
+	endpoint := params.Get("endpoint").String()
+	key := params.Get("key").String()
+	securityToken := params.Get("security_token").String()
+
 	ossArgs := ossArgs{
 		Bucket:          bucket,
 		AccessKeyId:     accessKeyId,
@@ -133,7 +138,7 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 
 	f, err := os.Open(path)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer f.Close()
 
@@ -166,14 +171,14 @@ func (p *PikPak) UploadFile(parentID, path string) error {
 		jNum, _ := strconv.Atoi(donePartSlice[j].PartNumber)
 		return iNum < jNum
 	})
-	args := completeMultipartUpload{
+	args := CompleteMultipartUpload{
 		Part: donePartSlice,
 	}
 	err = p.afterUpload(&args, ossArgs, uploadId)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return fileID, nil
 }
 
 func uploadChunk(wait *sync.WaitGroup, ch chan part, f *os.File, ChunkSize, fileSize int64, partSize int64, ossArgs ossArgs, uploadId string) {
@@ -276,7 +281,7 @@ func (p *PikPak) beforeUpload(ossArgs ossArgs) string {
 			hmacAuthorization(req, nil, time, ossArgs),
 		))
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.client.Do(req)
 	if err != nil {
 		return ""
 	}
@@ -299,7 +304,7 @@ func (p *PikPak) beforeUpload(ossArgs ossArgs) string {
 	return res.UploadId
 }
 
-func (p *PikPak) afterUpload(args *completeMultipartUpload, ossArgs ossArgs, uploadId string) error {
+func (p *PikPak) afterUpload(args *CompleteMultipartUpload, ossArgs ossArgs, uploadId string) error {
 	bs, err := xml.Marshal(args)
 	if err != nil {
 		return err
@@ -320,7 +325,7 @@ func (p *PikPak) afterUpload(args *completeMultipartUpload, ossArgs ossArgs, upl
 			hmacAuthorization(req, nil, time, ossArgs),
 		))
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.client.Do(req)
 	if err != nil {
 		return err
 	}

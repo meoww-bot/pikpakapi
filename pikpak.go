@@ -101,10 +101,10 @@ func (p *PikPak) Login() error {
 		return fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
 	}
 
-	p.JwtToken = jsoniter.Get(bs, "access_token").ToString()
-	p.refreshToken = jsoniter.Get(bs, "refresh_token").ToString()
-	p.Sub = jsoniter.Get(bs, "sub").ToString()
-	p.RefreshSecond = jsoniter.Get(bs, "expires_in").ToInt64()
+	p.JwtToken = gjson.GetBytes(bs, "access_token").String()
+	p.refreshToken = gjson.GetBytes(bs, "refresh_token").String()
+	p.Sub = gjson.GetBytes(bs, "sub").String()
+	p.RefreshSecond = gjson.GetBytes(bs, "expires_in").Int()
 
 	logger.Debug("Login params", "access_token", p.JwtToken, "refresh_token", p.refreshToken, "sub", p.Sub, "expires_in", p.RefreshSecond)
 
@@ -140,7 +140,7 @@ func (p *PikPak) authSigninCaptchaToken() error {
 		return fmt.Errorf("url: %s error_code: %d, error: %s", req.URL.String(), errorCode, errorMessage)
 	}
 
-	captchaToken := jsoniter.Get(bs, "captcha_token").ToString()
+	captchaToken := gjson.GetBytes(bs, "captcha_token").String()
 	logger.Debug("Login captcha token", "captcha_token", captchaToken)
 	p.CaptchaToken = captchaToken
 	return nil

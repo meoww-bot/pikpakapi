@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/tidwall/gjson"
 )
 
 func (p *PikPak) CreateShaFile(parentID, fileName, size, sha string) error {
@@ -41,8 +42,7 @@ func (p *PikPak) CreateShaFile(parentID, fileName, size, sha string) error {
 	if err != nil {
 		return err
 	}
-	file := jsoniter.Get(bs, "file")
-	phase := file.Get("phase").ToString()
+	phase := gjson.GetBytes(bs, "file.phase").String()
 	if phase == "PHASE_TYPE_COMPLETE" {
 		return nil
 	} else {
