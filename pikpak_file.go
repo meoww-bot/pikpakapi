@@ -78,7 +78,7 @@ func (p *PikPak) GetFile(fileID string) (info File, err error) {
 }
 
 // Find FileState similar to name in the parentId directory
-func (p *PikPak) GetFileByPath(path Path) (stat FileStat, err error) {
+func (p *PikPak) GetFileStatByPath(path Path) (stat FileStat, err error) {
 	parent, name := path.Parent(), path.Name()
 	parentID, err := p.GetDirID(parent)
 	if err != nil {
