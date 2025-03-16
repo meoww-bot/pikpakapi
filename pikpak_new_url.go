@@ -8,7 +8,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func (p *PikPak) CreateUrlFile(parentID, url string) (string, error) {
+func (p *PikPak) CreateUrlFile(parentID, url string) (UrlFileResponse, error) {
 	m := map[string]interface{}{
 		"kind":        KIND_FILE,
 		"upload_type": "UPLOAD_TYPE_URL",
@@ -21,19 +21,24 @@ func (p *PikPak) CreateUrlFile(parentID, url string) (string, error) {
 	}
 	bs, err := jsoniter.Marshal(&m)
 	if err != nil {
-		return "", err
+		return UrlFileResponse{}, err
 	}
 	req, err := http.NewRequest("POST", "https://api-drive.mypikpak.com/drive/v1/files", bytes.NewBuffer(bs))
 	if err != nil {
-		return "", err
+		return UrlFileResponse{}, err
 	}
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("X-Captcha-Token", p.CaptchaToken)
 	bs, err = p.sendWithErrHandle(req, bs)
 	if err != nil {
-		return "", err
+		return UrlFileResponse{}, err
+	}
+	var UrlFileRes UrlFileResponse
+	err = jsoniter.Unmarshal(bs, &UrlFileRes)
+	if err != nil {
+		return UrlFileResponse{}, err
 	}
 	name := gjson.GetBytes(bs, "task.name").String()
 	logger.Debug("Create url file", "task", name)
-	return name, nil
+	return UrlFileRes, nil
 }

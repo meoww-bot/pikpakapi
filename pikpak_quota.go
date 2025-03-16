@@ -23,3 +23,20 @@ func (p *PikPak) GetQuota() (Quota, error) {
 	}
 	return quotaRes.Quota, nil
 }
+
+func (p *PikPak) GetVipQuantity() (QuantityResponse, error) {
+	req, err := http.NewRequest("GET", "https://api-drive.mypikpak.com/vip/v1/quantity/list?type=transfer&limit=200", nil)
+	if err != nil {
+		return QuantityResponse{}, err
+	}
+	bs, err := p.sendWithErrHandle(req, nil)
+	if err != nil {
+		return QuantityResponse{}, err
+	}
+	var quantityRes QuantityResponse
+	err = jsoniter.Unmarshal(bs, &quantityRes)
+	if err != nil {
+		return QuantityResponse{}, err
+	}
+	return quantityRes, nil
+}
