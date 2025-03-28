@@ -39,39 +39,43 @@ type File struct {
 		Message string `json:"message"`
 		Title   string `json:"title"`
 	} `json:"audit"`
-	Medias []struct {
-		MediaID   string `json:"media_id"`
-		MediaName string `json:"media_name"`
-		Video     Video  `json:"video"`
-		Link      struct {
-			URL    string    `json:"url"`
-			Token  string    `json:"token"`
-			Expire time.Time `json:"expire"`
-		} `json:"link"`
-		NeedMoreQuota  bool          `json:"need_more_quota"`
-		VipTypes       []interface{} `json:"vip_types"`
-		RedirectLink   string        `json:"redirect_link"`
-		IconLink       string        `json:"icon_link"`
-		IsDefault      bool          `json:"is_default"`
-		Priority       int           `json:"priority"`
-		IsOrigin       bool          `json:"is_origin"`
-		ResolutionName string        `json:"resolution_name"`
-		IsVisible      bool          `json:"is_visible"`
-		Category       string        `json:"category"`
-	} `json:"medias"`
-	Trashed     bool   `json:"trashed"`
-	DeleteTime  string `json:"delete_time"`
-	OriginalURL string `json:"original_url"`
+	Medias      []Media `json:"medias"`
+	Trashed     bool    `json:"trashed"`
+	DeleteTime  string  `json:"delete_time"`
+	OriginalURL string  `json:"original_url"`
 	Params      struct {
 		Platform     string `json:"platform"`
 		PlatformIcon string `json:"platform_icon"`
 	} `json:"params"`
-	OriginalFileIndex int           `json:"original_file_index"`
-	Space             string        `json:"space"`
-	Apps              []interface{} `json:"apps"`
-	Writable          bool          `json:"writable"`
-	FolderType        string        `json:"folder_type"`
-	Collection        interface{}   `json:"collection"`
+	OriginalFileIndex int    `json:"original_file_index"`
+	Space             string `json:"space"`
+	Apps              []any  `json:"apps"`
+	Writable          bool   `json:"writable"`
+	FolderType        string `json:"folder_type"`
+	Collection        any    `json:"collection"`
+}
+
+type Media struct {
+	MediaID        string `json:"media_id"`
+	MediaName      string `json:"media_name"`
+	Video          Video  `json:"video"`
+	Link           Link   `json:"link"`
+	NeedMoreQuota  bool   `json:"need_more_quota"`
+	VipTypes       []any  `json:"vip_types"`
+	RedirectLink   string `json:"redirect_link"`
+	IconLink       string `json:"icon_link"`
+	IsDefault      bool   `json:"is_default"`
+	Priority       int    `json:"priority"`
+	IsOrigin       bool   `json:"is_origin"`
+	ResolutionName string `json:"resolution_name"`
+	IsVisible      bool   `json:"is_visible"`
+	Category       string `json:"category"`
+}
+
+type Link struct {
+	URL    string    `json:"url"`
+	Token  string    `json:"token"`
+	Expire time.Time `json:"expire"`
 }
 
 type Video struct {
@@ -203,20 +207,20 @@ type TaskParams struct {
 }
 
 type ReferenceFile struct {
-	Type          string                 `json:"@type"`
-	Kind          string                 `json:"kind"`
-	ID            string                 `json:"id"`
-	ParentID      string                 `json:"parent_id"`
-	Name          string                 `json:"name"`
-	Size          string                 `json:"size"`
-	MimeType      string                 `json:"mime_type"`
-	IconLink      string                 `json:"icon_link"`
-	Hash          string                 `json:"hash"`
-	Phase         string                 `json:"phase"`
-	ThumbnailLink string                 `json:"thumbnail_link"`
-	Params        map[string]interface{} `json:"params"`
-	Space         string                 `json:"space"`
-	Medias        []interface{}          `json:"medias"`
-	Starred       bool                   `json:"starred"`
-	Tags          []string               `json:"tags"`
+	Type          string         `json:"@type"`
+	Kind          string         `json:"kind"`
+	ID            string         `json:"id"`
+	ParentID      string         `json:"parent_id"`
+	Name          string         `json:"name"`
+	Size          string         `json:"size"`
+	MimeType      string         `json:"mime_type"`
+	IconLink      string         `json:"icon_link"`
+	Hash          string         `json:"hash"`
+	Phase         string         `json:"phase"`
+	ThumbnailLink string         `json:"thumbnail_link"`
+	Params        map[string]any `json:"params"`
+	Space         string         `json:"space"`
+	Medias        []any          `json:"medias"`
+	Starred       bool           `json:"starred"`
+	Tags          []string       `json:"tags"`
 }
